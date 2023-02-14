@@ -46,4 +46,7 @@ module.exports = {
   optimization: {
     runtimeChunk: 'single',
   },
+  experiments: {
+    topLevelAwait: true
+  }
 }
