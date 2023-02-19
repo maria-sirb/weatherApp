@@ -8,19 +8,33 @@
 </head>
 <body>
   <form>
-    <input class = "search" name = "search" type = "search" placeholder = "Search example: Venice, Italy ...">
-    <button type = "button" class = "searchBtn">Search </button>
+    <div class = "search-container">
+      <div>
+        <input class = "search" name = "search" type = "search" placeholder = "Search example: Venice, Italy ...">
+        <button type = "button" class = "search-btn">Search </button>
+      </div>
+      <div class = "error-container"></div>
+    </div>
+      
+    </div>
+    <div class = "buttons-container">
+      <input type="radio" id="metric" name="units" value="metric" checked>
+      <label class = "label" for="metric">&#8451;</label><br>
+      <input type="radio" id="imperial" name="units" value="imperial">
+      <label class= "label" for="imperial">&#8457;</label><br>
+    </div>
   </form>
   <div class = "data-container">
     <div class= "current">
-
+      
     </div>
-    <div class = "hourly">
-
+    <div class = "hourly-container"> 
+      
     </div>
-    <div class = "daily">
-
+    <div class = "daily-container">
+      
     </div>
-  </div>
+    
+  
 </body>
 </html>

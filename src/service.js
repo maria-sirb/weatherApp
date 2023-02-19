@@ -1,20 +1,22 @@
 import { countryCodes } from "./countries";
+import fromUnixTime from 'date-fns/fromUnixTime';
 
 let appId = "3cbe28ce67b6d8ea4fc65a1a0e18c7af";
 let currPosition;
-const apiCurrWatherUrl = "https://api.openweathermap.org/data/2.5/weather?";
+const apiCurrUrl = "https://api.openweathermap.org/data/2.5/weather?";
 const apiUrl = "https://api.openweathermap.org/data/2.5/forecast?";
 export let current, hourly = [], daily = [];
 
-/*export async function getWeather(url)
+export async function getCurrentWeather(url)
 {
     const response = await fetch(url);
     const data = await response.json();
     console.log(data);
     return data;
-}*/
+}
 export async function getWeather(location, units = "metric")
 {
+    ClearData();
     location = location.replace(/\s/g, "");
     let splitLocation = location.split(",");
     let city = splitLocation[0];
@@ -26,84 +28,161 @@ export async function getWeather(location, units = "metric")
         {
             countryCode = countryCodes[country];
         }
-        return await getCityCountryWeather(city, countryCode, units);
+        return {forecast: await getCityCountryForecast(city, countryCode, units), curr : await getCityCountryCurrentWeather(city, countryCode)};
+        // console.log(await getCityCountryCurrentWeather(city, countryCode));
     }
-    return await getCityWeather(city, units);
-    
+    return {forecast : await getCityForecast(city, units), curr : await getCityCurrentWeather(city, units)};
    
 }
-export async function getCityWeather(city, units = "metric")
+export async function getCityForecast(city, units = "metric")
 {
-    const response = await fetch(apiUrl + `q=${city}` + `&APPID=${appId}`+ `&units=${units}` );
-    const data = await response.json();
-    ProcessData(await data);
-    return data;
+    let data;
+    try
+    {
+        const response = await fetch(apiUrl + `q=${city}` + `&APPID=${appId}`+ `&units=${units}` );
+         data = await response.json();
+       // ProcessForecast(await data);
+   
+    }
+    catch(err)
+    {
+        return err.message;
+    }
+    ProcessForecast(await data);
+    console.log(data);
+    return await data;
 
 }
-export async function getCityCountryWeather(city, countryCode, units = "metric")
+export async function getCityCurrentWeather(city, units = "metric")
 {
-    const response = await fetch(apiUrl + `q=${city},${countryCode}` + `&exclude=hourly&APPID=${appId}`+ `&units=${units}` );
-    const data = await response.json();
-    ProcessData(await data);
-    return data;
+    let data;
+    try
+    {
+        const response = await fetch(apiCurrUrl + `q=${city}` + `&APPID=${appId}`+ `&units=${units}` );
+        data = await response.json();
+       
+    }
+    catch(err)
+    {
+        return err.message;
+    }
+    ProcessCurrent(await data);
+    return await data;
 
+}
+export async function getCityCountryForecast(city, countryCode, units = "metric")
+{
+    let data;
+    try
+    {
+        const response = await fetch(apiUrl + `q=${city},${countryCode}` + `&APPID=${appId}`+ `&units=${units}` );
+        data = await response.json();
+    
+    }
+    catch(err)
+    {
+        return err.message;
+    }
+    ProcessForecast(await data);
+    return await data;
+
+}
+export async function getCityCountryCurrentWeather(city, countryCode, units = "metric")
+{
+    let data;
+    try
+    {
+        const response = await fetch(apiCurrUrl + `q=${city},${countryCode}` + `&APPID=${appId}`+ `&units=${units}` );
+        data = await response.json();
+   
+    }
+    catch(err)
+    {
+        return err.message;
+    }
+    ProcessCurrent(await data);
+    return await data;
 }
 export async function getGeolocationWeather(latitude, longitude, units = "metric")
 {
-    const response = await fetch(apiUrl + `lat=${latitude}&lon=${longitude}` + `&APPID=${appId}` + `&units=${units}`);
+    return {forecast: await getGeolocationForecast(latitude, longitude, units), current : await getGeolocationCurrentWeather(latitude, longitude, units)};
 }
-function ProcessData(data)
+export async function getGeolocationForecast(latitude, longitude, units = "metric")
 {
-    ClearData();
-    setCurrent(data);
+    const response = await fetch(apiUrl + `lat=${latitude}&lon=${longitude}` + `&APPID=${appId}` + `&units=${units}`);
+    const data = await response.json();
+    ProcessForecast(await data);
+    return data;
+}
+export async function getGeolocationCurrentWeather(latitude, longitude, units = "metric")
+{
+    const response = await fetch(apiCurrUrl + `lat=${latitude}&lon=${longitude}` + `&APPID=${appId}` + `&units=${units}`);
+    const data = await response.json();
+    ProcessCurrent(await data);
+    return data;
+}
+function ProcessForecast(data)
+{
+    hourly = [];
+    daily = [];
     setHourly(data);
     setDaily(data);
-  //  console.log(current);
-  //  console.log(hourly);
-  //  console.log(daily);
     
+}
+function ProcessCurrent(data)
+{
+    current = {};
+    setCurrent(data);
 }
 function ClearData()
 {
-    current = {};
     hourly = [];
     daily = [];
+    current = {};
 }
-function setCurrent(data)
+
+async function setCurrent(data)
 {
+    console.log(data);
     current = 
     {
-        city : data.city.name,
-        country : data.city.country,
-        temp: Math.round(data.list[0].main.temp),
-        feelsLike : Math.round(data.list[0].main.feels_like),
-        humidity : `${data.list[0].main.humidity}%`,
-        description : data.list[0].weather[0].main,
-        icon : data.list[0].weather[0].icon,
-        visibility : `${data.list[0].visibility / 1000} km`,
-        sunrise : `${new Date(data.city.sunrise * 1000).getHours()}:${new Date(data.city.sunrise * 1000).getMinutes()}`,
-        sunset : `${new Date(data.city.sunset * 1000).getHours()}:${new Date(data.city.sunset * 1000).getMinutes()}`
-
+        city : data.name,
+        country : data.sys.country,
+        time : getTime(data.dt, data.timezone),
+        temp: Math.round(data.main.temp),
+        feelsLike : Math.round(data.main.feels_like),
+        humidity : `${data.main.humidity}%`,
+        description : data.weather[0].main,
+        icon : data.weather[0].icon,
+        visibility : `${data.visibility / 1000}`,
+        wind : Math.round((data.wind.speed * 3600) / 1000),
+        sunrise : getTime(data.sys.sunrise, data.timezone),
+        sunset : getTime(data.sys.sunset, data.timezone),
+        daytime : getDayTime(getTime(data.dt, data.timezone), getTime(data.sys.sunrise, data.timezone), getTime(data.sys.sunset, data.timezone) )
     };
+   // console.log( Number(data.list[0].dt_txt.split(" ")[1].split(":")[0])+ " " + new Date((data.city.sunrise) * 1000).getHours() + " " +new Date(data.city.sunset * 1000).toLocaleTimeString());
+    console.log(getTime(data.dt, data.timezone));
+   console.log(fromUnixTime( data.sys.sunrise + data.timezone).toUTCString().split(" ")[4]);
+    console.log(fromUnixTime( data.sys.sunset + data.timezone).toUTCString().split(" ")[4])
 }
 function setHourly(data)
 {
     let sunrise = new Date(data.city.sunrise * 1000).getHours();
-    let sunset = new Date(data.city.sunset * 1000).getHours();
-    let dayTime = "night";
+    let sunset =  new Date(data.city.sunset * 1000).getHours();
     for(let i = 0; i < 8; i++)
     {
+        
         let currHour = Number(data.list[i].dt_txt.split(" ")[1].split(":")[0]);
-        console.log(sunrise + " " + sunset + " " + currHour);
-        if( currHour >= sunrise && currHour <= sunset)
-        {
-            dayTime = "day";
-        }
+        let dayTime = getDayTime(currHour, sunrise, sunset);
+       // console.log(sunrise + " " + sunset + " " + currHour);
         let hour = 
         {
-           hour: data.list[i].dt_txt.split(" ")[1].split(":")[0],
+          // hour: data.list[i].dt_txt.split(" ")[1].split(":")[0],
+          hour: getTime(data.list[i].dt, data.city.timezone).split(":")[0],
            temp: Math.round(data.list[i].main.temp),
            description: data.list[i].weather[0].main,
+           icon : data.list[i].weather[0].icon,
+           precipitation : Math.round(data.list[i].pop * 100),
            dayTime :  dayTime
         }
         hourly.push(hour);
@@ -113,7 +192,7 @@ function setDaily(data)
 {
     const weekday = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
     let date = addDays(data.list[0].dt_txt.split(" "), 1);
-    let minTemp = 50, maxTemp = -50, description = "";
+    let minTemp = 50, maxTemp = -50, description = "", icon = "", precipitation = 0;
     let i = 1;
     //dont include today in the daily forecast
     while(data.list[i].dt_txt.split(" ")[0] == data.list[0].dt_txt.split(" ")[0])
@@ -122,8 +201,10 @@ function setDaily(data)
     }
     while(i < data.list.length)
     {
-        let dateTime = data.list[i].dt_txt.split(" ");
+       let dateTime = data.list[i].dt_txt.split(" ");
+       let time = getTime(data.list[i].dt, data.city.timezone);
         let temp = data.list[i].main.temp;
+        let precip = data.list[i].pop;
         if(dateTime[0] != date)
         {
             let day =
@@ -131,6 +212,8 @@ function setDaily(data)
                 day: weekday[new Date(date).getDay()],
                 min: Math.round(minTemp),
                 max: Math.round(maxTemp),
+                icon : icon,
+                precipitation : Math.round(precipitation * 100),
                 description : description
             }
             daily.push(day);
@@ -139,9 +222,11 @@ function setDaily(data)
             description = "";
             date = dateTime[0];
         }
-        if(dateTime[1] == "15:00:00")
+        if(time >= "12:00" && time <= "15:00")
         {
             description = data.list[i].weather[0].main;
+            icon = data.list[i].weather[0].icon;
+            precipitation = data.list[i].pop;
         }
         if(temp < minTemp)
         {
@@ -160,6 +245,23 @@ function addDays(date, days)
     result.setDate(result.getDate() + days);
     return result.toISOString().split("T")[0];
 }
+function getTime(unixTimestamp, offset)
+{
+    let time =  fromUnixTime( unixTimestamp + offset).toUTCString().split(" ")[4];
+    return time.split(":")[0] + ":" + time.split(":")[1];
+  
+}
+function getDayTime(current, sunrise, sunset)
+{
+    let dayTime = "night";
+   // console.log(current + " " + sunrise + " " + sunset);
+   console.log(current);
+    if( current >= sunrise && current <= sunset)
+    {
+        dayTime = "day";
+    }
+    return dayTime;
+}
 function getPosition()
 {
     return new Promise((resolve, reject) => {
@@ -171,9 +273,10 @@ export async function getCurrentLocation()
     
     try{
         currPosition = await getPosition();
-        console.log(currPosition);
+        return currPosition;
     }
     catch(err){
         console.log(err.message);
+        return err.message;
     }
 }
