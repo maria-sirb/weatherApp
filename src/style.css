@@ -230,6 +230,7 @@ input[type="radio"]:checked+label{
 }
 .day h3{
     font-size: 22px;
+    width: 150px;
 }
 .day h4{
     font-size: 20px;
@@ -368,6 +369,9 @@ radial-gradient(at 11% 14%, hsla(180,100%,88%,1) 0px, transparent 50%);
         width: 90vw;
         margin: 5px 10px;
     }
+    .day h3{
+        width: 120px;
+    }
 
 }
 @media (max-width: 410px)
@@ -401,6 +405,7 @@ radial-gradient(at 11% 14%, hsla(180,100%,88%,1) 0px, transparent 50%);
     }
     .day h3{
         font-size: 18px;
+        width: 100px;
     }
     .day h4{
         font-size: 16px;
