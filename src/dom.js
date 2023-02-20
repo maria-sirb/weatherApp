@@ -1,7 +1,8 @@
 import { current, hourly, daily, getCityWeather, getWeather, getGeolocationWeather, getCurrentLocation } from "./service";
-//import img from './assets/images/01d.png';
+import { ConvertDist, ConvertSpeed, ConvertTemp, ConvertToKm, ConvertToMiles, ConvertToMph } from "./utils";
 
-let input, units, unitsSymbol, distUnits, speedUnits;
+let input, unitsSymbol, distUnits, speedUnits;
+export let units;
 
 export async function Search()
 {
@@ -250,48 +251,3 @@ function setUnits()
     }
 }
 
-function ConvertSpeed(speed)
-{
-    if(units == "metric")
-        return ConvertToKph(speed);
-    else 
-        return ConvertToMph(speed);    
-}
-function ConvertDist(dist)
-{
-    if(units == "metric")
-        return ConvertToKm(dist);
-    else 
-        return ConvertToMiles(dist);    
-}
-function ConvertTemp(temp)
-{
-    if(units == "metric")
-        return ConvertToCelsius(temp);
-    else 
-        return ConvertToFahrenheit(temp);    
-}
-function ConvertToCelsius(temp)
-{
-    return Math.round((temp - 32) * 0.5556);   
-}
-function ConvertToFahrenheit(temp)
-{   
-    return Math.round((temp * 1.8) + 32);
-}
-function ConvertToKm(dist)
-{
-    return Math.round(dist * 1.6);
-}
-function ConvertToMiles(dist)
-{
-    return Math.round(dist * 0.621371);
-}
-function ConvertToKph(speed)
-{
-    return Math.round(speed * 1.6093440006147);
-}
-function ConvertToMph(speed)
-{
-    return Math.round(speed / 1.609344);
-}
