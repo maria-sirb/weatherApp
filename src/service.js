@@ -17,12 +17,11 @@ export async function getCurrentWeather(url)
 export async function getWeather(location, units = "metric")
 {
     ClearData();
-    location = location.replace(/\s/g, "");
     let splitLocation = location.split(",");
-    let city = splitLocation[0];
+    let city = splitLocation[0].replace(/\s/g, "+");
     if(splitLocation.length > 1)
     {
-        let country = splitLocation[1].replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
+        let country = splitLocation[1].replace(/\s/g, "").replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
         let countryCode = country;
         if(countryCodes.hasOwnProperty(country))
         {
